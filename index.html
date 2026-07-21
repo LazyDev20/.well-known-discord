@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dialog</title>
+    <style>
+        body {
+            background-color: #000000; 
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            position: relative; 
+        }
+
+        /* The background image container */
+        #background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('images/background.png'); 
+            background-size: cover; 
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1; 
+        }
+
+        /* Independent hardware-accelerated blur overlay layer */
+        #blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            z-index: 2;
+            pointer-events: none; 
+        }
+
+        /* The container holding the image and links at full natural size */
+        #draggable-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); 
+            display: inline-block;
+            line-height: 0; 
+            user-select: none; 
+            z-index: 999; 
+        }
+
+        #trick-pop-up {
+            display: block;
+            pointer-events: none; 
+        }
+
+        /* Base styles for our adjustment buttons */
+        .invisible-btn {
+            position: absolute;
+            height: 30px; 
+            background-color: transparent; 
+            z-index: 1000; 
+            cursor: pointer;
+            display: block;
+        }
+
+        /* Positions specifically for a tightly cropped bar.png */
+        #ok-bro-btn {
+            bottom: 34px;   
+            right: 132px; 
+            width: 88px; 
+        }
+
+        #bruhhh-btn {
+            bottom: 34px;   
+            right: 37px; 
+            width: 86px; 
+        }
+    </style>
+</head>
+<body>
+
+<!-- Clean Background Layer -->
+<div id="background-layer"></div>
+
+<!-- Independent Backdrop Blur Layer -->
+<div id="blur-overlay"></div>
+
+<div id="draggable-container">
+    
+    <!-- Image -->
+    <img id="trick-pop-up" src="images/bar.png" alt="">
+
+    <!-- The invisible divs acting as buttons -->
+    <div id="ok-bro-btn" class="invisible-btn"></div>
+    <div id="bruhhh-btn" class="invisible-btn"></div>
+
+</div>
+
+<script>
+    const container = document.getElementById('draggable-container');
+    const okBroBtn = document.getElementById('ok-bro-btn');
+    const bruhhhBtn = document.getElementById('bruhhh-btn');
+    
+    // --- JavaScript Button Actions --- //
+    okBroBtn.addEventListener('click', () => {
+        window.open('https://blinkle.fun/home', '_blank');
+    });
+
+    bruhhhBtn.addEventListener('click', () => {
+        window.open('https://www.youtube.com/watch?v=xvFZjo5PgG0', '_blank');
+    });
+    // --------------------------------- //
+
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
+
+    container.addEventListener('mousedown', (e) => {
+        if (e.target === okBroBtn || e.target === bruhhhBtn) return; 
+
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = container.getBoundingClientRect();
+        
+        container.style.transform = 'none';
+        container.style.left = rect.left + 'px';
+        container.style.top = rect.top + 'px';
+
+        initialLeft = rect.left;
+        initialTop = rect.top;
+        
+        e.preventDefault(); 
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        let newLeft = initialLeft + dx;
+        let newTop = initialTop + dy;
+
+        // --- BOUNDARY CLAMPING LOGIC --- //
+        const rect = container.getBoundingClientRect();
+        const maxLeft = window.innerWidth - rect.width;
+        const maxTop = window.innerHeight - rect.height;
+
+        // Prevent dragging outside the screen bounds
+        if (newLeft < 0) newLeft = 0;
+        if (newLeft > maxLeft) newLeft = maxLeft;
+        if (newTop < 0) newTop = 0;
+        if (newTop > maxTop) newTop = maxTop;
+        // ------------------------------- //
+
+        container.style.left = `${newLeft}px`;
+        container.style.top = `${newTop}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    // Touch support optimization with boundaries
+    container.addEventListener('touchstart', (e) => {
+        if (e.target === okBroBtn || e.target === bruhhhBtn) return;
+        const touch = e.touches[0];
+        isDragging = true;
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        const rect = container.getBoundingClientRect();
+        container.style.transform = 'none';
+        container.style.left = rect.left + 'px';
+        container.style.top = rect.top + 'px';
+
+        initialLeft = rect.left;
+        initialTop = rect.top;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+
+        let newLeft = initialLeft + dx;
+        let newTop = initialTop + dy;
+
+        const rect = container.getBoundingClientRect();
+        const maxLeft = window.innerWidth - rect.width;
+        const maxTop = window.innerHeight - rect.height;
+
+        if (newLeft < 0) newLeft = 0;
+        if (newLeft > maxLeft) newLeft = maxLeft;
+        if (newTop < 0) newTop = 0;
+        if (newTop > maxTop) newTop = maxTop;
+
+        container.style.left = `${newLeft}px`;
+        container.style.top = `${newTop}px`;
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+</script>
+
+</body>
+</html>
